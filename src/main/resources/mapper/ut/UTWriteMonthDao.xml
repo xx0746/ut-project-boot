@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.modules.ut.dao.UTWriteMonthDao">
+	<select id="userManagerUtList" resultType="com.modules.ut.entity.UTWriteMonth" parameterType="Map">
+		select year_and_month,project_id,user_id,department_id,sum(ut) ut from ut_write_manager
+		where 1=1
+		<if test="param.departmentId != null and param.departmentId != ''">
+			and department_id = #{param.departmentId}
+		</if>
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and year_and_month = #{param.yearAndMonth}
+		</if>
+		group by year_and_month,project_id,department_id,user_id
+	</select>
+	<select id="userUtList" resultType="Map" parameterType="Map">
+		select a.year_and_month yearAndMonth,a.department_id departmentId,
+		a.user_id userId,COALESCE(sum(ut),0) ut,c.ratio,b.level
+		from ut_write_month a
+		left join sys_user b on a.user_id = b.user_id
+		left join user_level c on b.level = c.level
+		where a.status=3
+		<if test="param.departmentId != null and param.departmentId != ''">
+			and a.department_id = #{param.departmentId}
+		</if>
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and a.year_and_month = #{param.yearAndMonth}
+		</if>
+		group by a.year_and_month,a.department_id,a.user_id,c.ratio,b.level
+	</select>
+</mapper>

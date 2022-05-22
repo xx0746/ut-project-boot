@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.modules.ut.dao.ProjectApplyUserDao">
+    <select id="queryProjectApplyUserList" parameterType="Map" resultType="com.modules.ut.VO.ProjectApplyUserVo">
+        select a.user_id,b.username user_name from project_apply_user a
+        left join sys_user b on a.user_id = b.user_id
+        where 1=1
+        <if test="param.projectId != null and param.projectId != ''">
+            and a.project_id = #{param.projectId}
+        </if>
+        <if test="param.start != null and param.size != null">
+            limit #{param.start},#{param.size}
+        </if>
+    </select>
+
+    <select id="queryProjectApplyUserCount" resultType="java.lang.Long" parameterType="Map">
+        select count(*) from project_apply_user a
+        where 1=1
+        <if test="param.projectId != null and param.projectId != ''">
+            and a.project_id = #{param.projectId}
+        </if>
+    </select>
+</mapper>

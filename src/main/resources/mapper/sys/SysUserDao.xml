@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.modules.sys.dao.SysUserDao">
+	<!-- 查询用户的所有权限 -->
+	<select id="queryAllPerms" resultType="string">
+		select m.perms from sys_user_role ur 
+			LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+			LEFT JOIN sys_menu m on rm.menu_id = m.menu_id 
+		where ur.user_id = #{userId}
+	</select>
+	
+	<!-- 查询用户的所有菜单ID --> 
+	<select id="queryAllMenuId" resultType="long">
+		select distinct rm.menu_id from sys_user_role ur 
+			LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+		where ur.user_id = #{userId}
+	</select>
+	
+	<select id="queryByUserName" resultType="com.modules.sys.entity.SysUserEntity">
+		select * from sys_user where username = #{username}
+	</select>
+
+	<select id="selectUserInfoWithPage" resultType="com.modules.sys.entity.SysUserEntity">
+		select *
+		from sys_user as user
+		left join sys_user_role as userRole on  user.user_id = userRole.user_id
+		left join sys_role as role on userRole.role_id = role.role_id
+		<where>
+			<if test="username != null">
+				user.username like #{username}
+			</if>
+			<if test="date != null">
+				and DATE_FORMAT(user.create_time,'%Y-%m') = DATE_FORMAT(#{date},'%Y-%m')
+			</if>
+			<if test="department != null">
+				and role.role_name like #{department}
+			</if>
+		</where>
+		limit #{startIndex},#{pageSize}
+	</select>
+
+	<select id="selectCountWithCondition" resultType="java.lang.Integer">
+		select count(*)
+		from sys_user as user
+		left join sys_user_role as userRole on  user.user_id = userRole.user_id
+		left join sys_role as role on userRole.role_id = role.role_id
+		<where>
+			<if test="username != null">
+				user.username like #{username}
+			</if>
+			<if test="date != null">
+				and DATE_FORMAT(user.create_time,'%Y-%m') = DATE_FORMAT(#{date},'%Y-%m')
+			</if>
+			<if test="department != null">
+				and role.role_name like #{department}
+			</if>
+		</where>
+	</select>
+	<select id="userList" resultType="com.modules.sys.entity.SysUserEntity">
+		select * from sys_user where username like #{userName} limit ${start}, ${size}
+	</select>
+</mapper>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.modules.ut.dao.ApprovalDao">
+    <!-- 审核项目列表 -->
+    <select id="projectApprovalList" parameterType="Map" resultType="Map">
+        select  a.id,a.code,a.name,a.ut,
+        COALESCE(c.monthut,0) monthut,
+        COALESCE(c.usedut,0) usedut,
+        a.ut-COALESCE(c.usedut,0) unusedut,
+        COALESCE (b.noApprovalCount, 0) noApprovalCount,
+        COALESCE (b.approvalCount, 0) approvalCount,
+        a.according,a.start_time startTime,
+        a.level,a.user_name userName,
+        a.department_name departmentName,
+        a.end_time endTime,a.excel_month excelMonth
+        from project a
+        left join (select project_id,sum(case when a.year_and_month &lt;= #{param.yearAndMonth} then  ut else 0 end) usedut
+        ,sum(case when a.year_and_month = #{param.yearAndMonth} then  ut else 0 end) monthut
+        from ut_write_month a where a.status = 3   group by project_id ) c on c.project_id = a.id
+        left join (select project_id,sum(case when status = 0 then 1 else 0 end ) noApprovalCount,
+        sum(case when status = 1 then 1 else 0 end ) approvalCount from ut_write
+        where year_and_month = #{param.yearAndMonth} group by project_id )
+        b on b.project_id = a.id
+        where 1=1
+        <if test="param.userId != null and param.userId != ''">
+            and a.user_id = #{param.userId}
+        </if>
+        <if test="param.departmentId != null and param.departmentId != ''">
+            and a.department_id = #{param.departmentId}
+        </if>
+        <if test="param.start != null and param.size != null">
+            limit #{param.start},#{param.size}
+        </if>
+    </select>
+    <select id="projectApprovalCount" parameterType="Map" resultType="Long">
+        select count(*) from project a where 1=1
+        <if test="param.userId != null and param.userId != ''">
+            and a.user_id = #{param.userId}
+        </if>
+        <if test="param.departmentId != null and param.departmentId != ''">
+            and a.department_id = #{param.departmentId}
+        </if>
+    </select>
+    <!-- 项目负责人工作类型工时列表 -->
+    <select id="managerApprovalWorkTimeList" parameterType="Map" resultType="Map">
+        select a.id,a.one_id oneId,a.two_id twoId,a.user_id userId,a.ut,a.write_content writeContent,
+        b.username,c.name oneName,d.name twoName,a.project_id projectId,a.write_date writeDate,
+        a.department_id departmentId,COALESCE (e.ut, 0) writeUT
+        from ut_write a
+        left join sys_user b on a.user_id = b.user_id
+        left join work_type c on c.id = a.one_id
+        left join work_type d on d.id = a.two_id
+        left join ut_write_manager e on e.write_date=a.write_date and e.user_id = a.user_id
+        and e.project_id = a.project_id
+        where 1=1
+        <if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+            and a.year_and_month = #{param.yearAndMonth}
+        </if>
+        <if test="param.status != null and param.status != ''">
+            and a.status in ( ${param.status} )
+        </if>
+        <if test="param.projectId != null and param.projectId != ''">
+            and a.project_id = #{param.projectId}
+        </if>
+    </select>
+    <!-- 所领导审批列表 -->
+    <select id="utApprovalList" parameterType="Map" resultType="Map">
+        select a.user_id userId,sum(a.ut) ut,b.username userName,c.department_name departmentName,
+        a.year_and_month yearAndMonth from ut_write_month a
+        left join sys_user b on a.user_id = b.user_id
+        left join sys_department c on a.department_id = c.id
+        where 1=1
+        <if test="param.status != null and param.status != ''">
+            and a.status in ( ${param.status} )
+        </if>
+        <if test="param.departmentId != null and param.departmentId != ''">
+            and a.department_id = #{param.departmentId}
+        </if>
+        <if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+            and a.year_and_month = #{param.yearAndMonth}
+        </if>
+        group by a.user_id,b.username,c.department_name,a.year_and_month
+        <if test="param.start != null and param.size != null">
+            limit #{param.start},#{param.size}
+        </if>
+    </select>
+    <select id="utApprovalCount" parameterType="Map" resultType="Long">
+        select count(*) from (select a.user_id,a.year_and_month from ut_write_month a
+        where 1=1
+        <if test="param.status != null and param.status != ''">
+            and a.status in ( ${param.status} )
+        </if>
+        <if test="param.departmentId != null and param.departmentId != ''">
+            and a.department_id = #{param.departmentId}
+        </if>
+        <if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+            and a.year_and_month = #{param.yearAndMonth}
+        </if>
+        group by a.user_id,a.year_and_month ) c
+    </select>
+    <select id="utApprovalProjectList" parameterType="Map" resultType="Map">
+        select a.id,a.user_id userId,a.ut,a.year_and_month yearAndMonth,d.name projectName
+        from ut_write_month a left join project d on a.project_id = d.id
+        where 1=1
+        <if test="param.status != null and param.status != ''">
+            and a.status in ( ${param.status} )
+        </if>
+        <if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+            and a.year_and_month = #{param.yearAndMonth}
+        </if>
+        <if test="param.userIds != null and param.userIds != ''">
+            and a.user_id in ( ${param.userIds} )
+        </if>
+    </select>
+
+</mapper>

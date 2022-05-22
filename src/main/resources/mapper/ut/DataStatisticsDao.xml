@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.modules.ut.dao.DataStatisticsDao">
+	<!-- 员工统计列表 -->
+	<select id="userWorkTimeList" parameterType="Map" resultType="Map">
+		select a.user_id userId,a.year_and_month yearAndMonth,sum(ut) monthTime,b.username,
+		b.department_id AS departmentId,c.department_name AS departmentName
+		from ut_write_month a
+		left join sys_user b on a.user_id = b.user_id
+		left join sys_department c on b.department_id = c.id
+		where a.status = 3
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and a.year_and_month = #{param.yearAndMonth}
+		</if>
+		<if test="param.departmentId != null and param.departmentId != ''">
+			and a.department_id = #{param.departmentId}
+		</if>
+		group by a.user_id,a.year_and_month
+		order by monthTime desc
+		<if test="param.start != null and param.size != null">
+			limit #{param.start},#{param.size}
+		</if>
+	</select>
+	<select id="userWorkTimeCount" parameterType="Map" resultType="Long">
+		select count(*) from (select a.user_id,a.year_and_month
+		from ut_write_month a
+		where a.status = 3
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and a.year_and_month = #{param.yearAndMonth}
+		</if>
+		<if test="param.departmentId != null and param.departmentId != ''">
+			and a.department_id = #{param.departmentId}
+		</if>
+		group by a.user_id,a.year_and_month ) a
+	</select>
+	<!-- 项目统计列表 -->
+	<select id="projectWorkTimeList" parameterType="Map" resultType="Map">
+		select  a.id,a.code,a.name,a.ut,
+		COALESCE(c.monthut,0) monthut,
+		COALESCE(c.usedut,0) usedut,
+		a.ut-COALESCE(c.usedut,0) unusedut,
+		a.according,a.start_time startTime,
+		a.level,a.user_name userName,
+		a.department_name departmentName,
+		a.end_time endTime,a.excel_month excelMonth
+		from project a
+		left join (select project_id,sum(case when a.year_and_month &lt;= #{param.yearAndMonth} then  ut else 0 end) usedut
+		,sum(case when a.year_and_month = #{param.yearAndMonth} then  ut else 0 end) monthut
+		from ut_write_month a where a.status = 3   group by project_id ) c on c.project_id = a.id
+		where 1=1
+		<if test="param.departmentId != null and param.departmentId != ''">
+			and a.department_id = #{param.departmentId}
+		</if>
+		<if test="param.start != null and param.size != null">
+			limit #{param.start},#{param.size}
+		</if>
+	</select>
+	<select id="projectWorkTimeCount" parameterType="Map" resultType="Long">
+		select count(*) from project a where 1=1
+		<if test="param.departmentId != null and param.departmentId != ''">
+			and a.department_id = #{param.departmentId}
+		</if>
+	</select>
+	<!-- 绩效列表 -->
+	<select id="performanceList" parameterType="Map" resultType="com.modules.ut.VO.PerformanceVO">
+		select a.user_id,b.username,a.ut,a.performance,a.ut_price,a.synthetical_performance,
+		a.user_ratio,a.year_and_month,c.department_name,b.level
+		from user_performance a
+		left join sys_user b on a.user_id = b.user_id
+		left join sys_department c on a.department_id = c.id
+		where 1=1
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and a.year_and_month = #{param.yearAndMonth}
+		</if>
+		<if test="param.departmentId != null and param.departmentId != ''">
+			and a.department_id = #{param.departmentId}
+		</if>
+		<if test="param.year != null and param.year != ''">
+			and substr(a.year_and_month,1,4) = #{param.year}
+		</if>
+		order by a.department_id,a.year_and_month desc,a.performance desc
+		<if test="param.start != null and param.size != null">
+			limit #{param.start},#{param.size}
+		</if>
+	</select>
+	<select id="performanceCount" parameterType="Map" resultType="Long">
+		select count(*) from user_performance a where 1=1
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and a.year_and_month = #{param.yearAndMonth}
+		</if>
+		<if test="param.year != null and param.year != ''">
+			and substr(a.year_and_month,1,4) = #{param.year}
+		</if>
+		<if test="param.departmentId != null and param.departmentId != ''">
+			and a.department_id = #{param.departmentId}
+		</if>
+	</select>
+
+</mapper>

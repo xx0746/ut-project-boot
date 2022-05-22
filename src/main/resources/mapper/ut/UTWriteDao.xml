@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.modules.ut.dao.UTWriteDao">
+	<select id="writeList" resultType="com.modules.ut.VO.UTWriteVO" parameterType="Map">
+		select  b.id as oneId, b.name as oneName,c.id as twoId, c.name as twoName,
+		a.ut,a.status,a.write_content
+		from ut_write a
+		left join work_type as b on a.one_id = b.id
+		left join work_type as c on a.two_id = c.id
+		where 1=1
+		<if test="param.projectId != null and param.projectId != ''">
+			and a.project_id = #{param.projectId}
+		</if>
+		<if test="param.userId != null and param.userId != ''">
+			and a.user_id = #{param.userId}
+		</if>
+		<if test="param.writeDate != null and param.writeDate != ''">
+			and a.write_date = #{param.writeDate}
+		</if>
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and a.year_and_month = #{param.yearAndMonth}
+		</if>
+		<if test="param.start != null and param.size != null">
+			limit #{param.start},#{param.size}
+		</if>
+	</select>
+
+	<select id="writeListCount" resultType="java.lang.Long" parameterType="Map">
+		select  count(*) from ut_write a
+		where 1=1
+		<if test="param.projectId != null and param.projectId != ''">
+			and a.project_id = #{param.projectId}
+		</if>
+		<if test="param.userId != null and param.userId != ''">
+			and user_id = #{param.userId}
+		</if>
+		<if test="param.writeDate != null and param.writeDate != ''">
+			and write_date = #{param.writeDate}
+		</if>
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and year_and_month = #{param.yearAndMonth}
+		</if>
+	</select>
+	<select id="writeProjectList" resultType="Map">
+		select a.user_id,a.ut allut,a.project_id projectId,
+		COALESCE(c.usedut,0) usedut,
+		a.ut-COALESCE(c.usedut,0) as unusedut,
+		b.code,
+		b.name,
+		b.according,
+		b.start_time startTime,
+		b.level,
+		b.user_name userName,
+		b.department_name departmentName,
+		b.end_time endTime,
+		b.excel_month excelMonth
+		from project_user a
+		left join project b on a.project_id = b.id
+		left join (select user_id,project_id,COALESCE(sum(ut),0) usedut
+		from ut_write_month where status = 3 group by user_id,project_id) c
+		on a.user_id = c.user_id and a.project_id = c.project_id
+		where a.user_id = #{userId}
+		limit #{start}, #{size}
+	</select>
+	<select id="projectCount" resultType="java.lang.Long">
+		select count(*) from project_user a
+		where a.user_id = #{userId}
+	</select>
+	<select id="utDataStatisticsUserDetailList" resultType="Map" parameterType="Map">
+		select  b.id as oneId, b.name as oneName,c.id as twoId, c.name as twoName,
+		a.ut,a.write_content writeContent,a.write_date writeDate,d.name projectName
+		from ut_write a
+		left join work_type as b on a.one_id = b.id
+		left join work_type as c on a.two_id = c.id
+		left join project d on a.project_id = d.id
+		where 1=1
+		<if test="param.projectId != null and param.projectId != ''">
+			and a.project_id = #{param.projectId}
+		</if>
+		<if test="param.userId != null and param.userId != ''">
+			and a.user_id = #{param.userId}
+		</if>
+		<if test="param.writeDate != null and param.writeDate != ''">
+			and a.write_date = #{param.writeDate}
+		</if>
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and a.year_and_month = #{param.yearAndMonth}
+		</if>
+		order by a.project_id,a.write_date desc
+		<if test="param.start != null and param.size != null">
+			limit #{param.start},#{param.size}
+		</if>
+	</select>
+	<select id="utDataStatisticsProjectDetailList" resultType="Map" parameterType="Map">
+		select  b.id as oneId, b.name as oneName,c.id as twoId, c.name as twoName,
+		a.ut,a.write_content writeContent,a.write_date writeDate,
+		e.username,f.department_name departmentName
+		from ut_write a
+		left join work_type as b on a.one_id = b.id
+		left join work_type as c on a.two_id = c.id
+		left join sys_user e on e.user_id = a.user_id
+		left join sys_department f on f.id = e.department_id
+		where 1=1
+		<if test="param.projectId != null and param.projectId != ''">
+			and a.project_id = #{param.projectId}
+		</if>
+		<if test="param.userId != null and param.userId != ''">
+			and a.user_id = #{param.userId}
+		</if>
+		<if test="param.writeDate != null and param.writeDate != ''">
+			and a.write_date = #{param.writeDate}
+		</if>
+		<if test="param.yearAndMonth != null and param.yearAndMonth != ''">
+			and a.year_and_month = #{param.yearAndMonth}
+		</if>
+		order by a.department_id,a.user_id,a.write_date desc
+		<if test="param.start != null and param.size != null">
+			limit #{param.start},#{param.size}
+		</if>
+	</select>
+</mapper>
